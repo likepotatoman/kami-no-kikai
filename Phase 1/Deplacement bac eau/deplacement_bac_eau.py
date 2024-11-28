@@ -14,14 +14,23 @@ import time
 #Initialisation des pins
 signal_in_pin = 
 signal_out_pin = 
+limit_switch_1_in_pin =  #limit switch au niveau du prep papier
+limit_switch_2_in_pin =  #limit switch au niveau du bras robotique
 
 #Creation des fonctions
 def aller_robot():
-
+  while limit_switch_2_in_pin == False:
+    #tourner le motor
+  signal_out_pin.value(1)
+  time.sleep(100)
+  signal_out_pin.value(0)
 
 def aller_papier():
-
-
+  while limit_switch_2_in_pin == False:
+    #tourner le motor dans le sens inverse
+  signal_out_pin.value(1)
+  time.sleep(100)
+  signal_out_pin.value(0)
 
 #Loop
 while True:
