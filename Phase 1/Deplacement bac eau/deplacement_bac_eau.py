@@ -1,3 +1,3 @@
 """
-Mettre des commentaire cf robot_arm.py
+Mettre des commentaires cf robot_arm.py
 """
