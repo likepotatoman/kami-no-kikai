@@ -53,6 +53,7 @@ def spin_motor_3(n_steps, direction):
 
 
 def move(M_x_but, M_y_but, phi_but):
+  global alpha_actuel, theta_actuel, tau_actuel, beta_actuel, beta_prime_actuel, epsilon_actuel, phi_actuel, lambda_actuel, I_x_actuel, I_y_actuel, M_x_actuel, M_y_actuel
   alpha_but = 
   theta_but = 
   tau_but = 
