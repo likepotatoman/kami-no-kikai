@@ -19,6 +19,7 @@ Dans ce code, nous allons creer :
 #importation des librairies
 import machine
 import time
+import math
 
 #Initialisation des pins
 signal_in_pin = 
