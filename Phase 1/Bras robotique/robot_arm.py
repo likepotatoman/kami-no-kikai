@@ -20,16 +20,27 @@ Dans ce code, nous allons creer :
 import machine
 import time
 import math
+import _thread
 
 #Initialisation des pins
 signal_in_pin = 
 signal_out_pin =
-motor_1_pin = 
-motor_2_pin = 
-motor_3_pin = 
+vacuum_signal =
+shredder_signal = 
+motor_1_pin_dir = 
+motor_1_pin_pul = 
+motor_2_pin_dir = 
+motor_2_pin_pul = 
+motor_3_pin_dir = 
+motor_3_pin_pul = 
 servo_pin = 
 
 #Initialisation des variables des positions initiales
+motor_1_fini = False
+motor_2_fini = False
+motor_3_fini = False
+motor_4_fini = False
+motor_5_fini = False
 position = 
 sukata_position = [0,0]
 alpha_actuel = 
@@ -46,32 +57,89 @@ M_x_actuel =
 M_y_actuel = 
 
 #Creation des fonctions
-def spin_motor_1(n_steps, direction): #motor at O
+def sign(x): #Attention il faut bien configurer les moteurs tels que quand dir == HIGH, ils tournent dans le sens anti-horraire / trigonometrique
+    if x > 0:
+        return 1
+    elif x < 0:
+        return 0
+    else:
+        return 1
 
 
-def spin_motor_2(n_steps, direction): #motor at I
+def spin_motor_1(n_steps, direction, speed): #motor at O
+  global motor_1_fini
+  motor_1_pin_dir.value(direction)
+  for i in range(n_steps):
+    motor_1_pin_pul.value(HIGH)
+    time.sleep(speed)
+    motor_1_pin_pul.value(LOW)
+    time.sleep(speed)
+  motor_1_fini = True
+    
 
+def spin_motor_2(n_steps, direction, speed): #motor at I
+  global motor_2_fini
+  motor_2_pin_dir.value(direction)
+  for i in range(n_steps):
+    motor_2_pin_pul.value(HIGH)
+    time.sleep(speed)
+    motor_2_pin_pul.value(LOW)
+    time.sleep(speed)
+  motor_2_fini = True
 
-def spin_motor_3(n_steps, direction): #motor at M
-
+def spin_motor_3(n_steps, direction, speed): #motor at M
+  global motor_3_fini
+  motor_3_pin_dir.value(direction)
+  for i in range(n_steps):
+    motor_3_pin_pul.value(HIGH)
+    time.sleep(speed)
+    motor_3_pin_pul.value(LOW)
+    time.sleep(speed)
+  motor_3_fini = True
 
 def spin_motor_4(n_steps, direction): #motor for rail
-
+  global motor_4_fini
+  motor_4_pin_dir.value(direction)
+  for i in range(n_steps):
+    motor_4_pin_pul.value(HIGH)
+    time.sleep(0.5) #a changer si besoin
+    motor_4_pin_pul.value(LOW)
+    time.sleep(0.5) #a changer si besoin
+  motor_4_fini = True
 
 def spin_motor_5(n_steps, direction): #motor on rotating platform
-
+  global motor_5_fini
+  motor_5_pin_dir.value(direction)
+  for i in range(n_steps):
+    motor_5_pin_pul.value(HIGH)
+    time.sleep(0.5) #a changer si besoin
+    motor_5_pin_pul.value(LOW)
+    time.sleep(0.5) #a changer si besoin
+  motor_5_fini = True
 
 def turn_on_vacuum():
-
+  vacuum_signal.value(HIGH)
+  time.sleep(1)
+  vacuum_signal.value(LOW)
 
 def turn_off_vacuum():
-
+  vacuum_signal.value(HIGH)
+  time.sleep(1)
+  vacuum_signal.value(LOW)
 
 def turn_on_shredder_mixer():
+  shredder_signal.value(HIGH)
+  time.sleep(1)
+  shredder_signal.value(LOW)
   
+def turn_off_shredder_mixer():
+  shredder_signal.value(HIGH)
+  time.sleep(1)
+  shredder_signal.value(LOW)  
 
 def move(M_x_but, M_y_but, phi_but):
-  global alpha_actuel, theta_actuel, tau_actuel, beta_actuel, beta_prime_actuel, epsilon_actuel, phi_actuel, lambda_actuel, I_x_actuel, I_y_actuel, M_x_actuel, M_y_actuel
+  global alpha_actuel, theta_actuel, tau_actuel, beta_actuel, beta_prime_actuel, epsilon_actuel, phi_actuel, lambda_actuel, I_x_actuel, I_y_actuel, M_x_actuel, M_y_actuel, motor_1_fini, motor_2_fini, motor_3_fini
+  #calculs d'angles intermediaires
   alpha_but = 
   theta_but = 
   tau_but = 
@@ -81,14 +149,32 @@ def move(M_x_but, M_y_but, phi_but):
   I_x_but = 
   I_y_but = 
 
+  #calcul d'angles final
   delta_theta = 
   delta_beta_prime = 
   delta_phi = 
 
-  spin_motor_1()
-  spin_motor_2()
-  spin_motor_3()
+  #calcul de pas associes
+  motor_1_steps = 
+  motor_2_steps = 
+  motro_3_steps = 
+  
+  #Calculs vitesses de chaque moteur
+  motor_1_speed = 
+  motor_2_speed =
+  motor_3_speed =
+  
+  motor_1_fini = False
+  motor_2_fini = False
+  motor_3_fini = False
+  
+  _thread.start_new_thread(spin_motor_1, (abs(moteur_1_steps), sign(moteur_1_steps), motor_1_speed))
+  _thread.start_new_thread(spin_motor_2, (abs(moteur_2_steps), sign(moteur_2_steps), motor_2_speed))
+  _thread.start_new_thread(spin_motor_3, (abs(moteur_3_steps), sign(moteur_3_steps), motor_3_speed))
 
+  while motor_1_fini == False or motor_2_fini == False or motor_3_fini == False:
+    time.sleep(1)
+  
   alpha_actuel = alpha_but
   theta_actuel = theta_but
   tau_actuel = tau_but
@@ -189,6 +275,13 @@ def rail_move(goal_position):
       positive_rail_move()
     else : 
       negative_rail_move():
+
+def rotate_quarter_left():
+  spin_motor_5(#arbitraire, 1)
+
+def rotate_quarter_right():
+  spin_motor_5(#arbitraire, 0)
+
 
 def pass_cycle():
   rail_move(#position du  vacuum)
