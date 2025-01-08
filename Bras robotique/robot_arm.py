@@ -33,28 +33,125 @@ motor_2_pin_dir =
 motor_2_pin_pul = 
 motor_3_pin_dir = 
 motor_3_pin_pul = 
-servo_pin = 
+motor_4_pin_dir = 
+motor_4_pin_pul = 
+motor_5_pin_dir = 
+motor_5_pin_pul = 
+servo_PWM_pin = 
 
 #Initialisation des variables des positions initiales
-motor_1_fini = False
-motor_2_fini = False
-motor_3_fini = False
-motor_4_fini = False
-motor_5_fini = False
-position_rail = 
-sukata_position = [0,0]
-alpha_actuel = 
-theta_actuel = 
-tau_actuel = 
-beta_actuel = 
-beta_prime_actuel = 
-epsilon_actuel = 
-phi_actuel = 
-lambda_actuel = 
-I_x_actuel = 
-I_y_actuel = 
-M_x_actuel = 
-M_y_actuel = 
+
+ 
+
+#creation des classes et objets
+class Motor:
+    def __inti__(self, motor_pin_dir, motor_pin_pul, gear_ratio):
+        self.angle = 0
+        self.fini = False
+        self.pin_dir = motor_pin_din
+        self.pin_pul = motor_pin_pul
+        self.gear_ratio = gear_ratio
+        self. fastest_step_time = 
+        self.full_spin_time = self.gear_ratio * 200 * self.fastest_step_time
+        
+    def spin(self, n_steps, direction, total_time):
+        self.pin_dir.value(direction)
+        one_step = round(total_time / n_steps)
+        for i in range(n_steps):
+            self.pin_pul.value(HIGH)
+            time.sleep(one_step / 2)
+            self.pin_pul.value(LOW)
+            time.sleep(one_step / 2)
+        self.fini = True
+
+    def determine_time(self, steps):
+        return round(abs(steps) * self.fastest_step_time)
+
+    def determine_steps(self, angle):
+        return round((angle / 360) * self.full_spin_time)
+        
+
+shoulder = Motor(motor_1_pin_dir, motor_1_pin_pul, motor_1_gear_ratio)
+elbow = Motor(motor_2_pin_dir, motor_2_pin_pul, motor_2_gear_ratio)
+wrist = Motor(motor_3_pin_dir, motor_3_pin_pul, motor_3_gear_ratio)
+body = Motor(motor_4_pin_dir, motor_4_pin_pul, motor_4_gear_ratio)
+legs = Motor(motor_5_pin_dir, motor_5_pin_pul, motor_5_gear_ratio)
+
+
+class Servo:
+    def __init__(self, PWM_pin, min_PW, max_PW): #PW are in ms
+        self.PWM_pin = PWM(PWM_pin)
+        self.PWM_pin.freq(50)
+        self.max_DC = 65535 * (max_PW / 20) #DC stands for duty cycle
+        self.min_DC = 65535 * (min_PW / 20)
+        self.delta_DC = self.max_DC - self.min_DC
+
+    def move(self, angle):
+        percentage = angle / 180
+        duty_cycle = self.delta_DC * percentage + self.min_DC
+        self.PWM_pin.duty_u16(round(duty_cycle))
+
+claw = Servo(servo_PWM_pin):
+
+class Robot:
+    def __init__(self):
+        self.position_rail = 
+        self.sukata_position = 
+        self.alpha = 
+        self.theta = 
+        self.tau = 
+        self.beta = 
+        self.beta_prime = 
+        self.epsilon = 
+        self.phi = 
+        self.lambda = 
+        self.I_x = 
+        self.I_y = 
+        self.M_x = 
+        self.M_y =
+
+    def move(self, M_x_but, M_y_but, phi_but):
+        #calculs d'angles intermediaires
+        alpha_but = 
+        theta_but = 
+        tau_but = 
+        beta_but = 
+        beta_prime_but = 
+        epsilon_but =  
+        I_x_but = 
+        I_y_but = 
+        
+        #calcul d'angles final
+        delta_tau = 
+        delta_beta_prime = 
+        delta_phi =  
+        
+        #Calculs vitesses de chaque moteur
+        time = max([shoulder.determine_time(shoulder.determine_steps(delta_tau)), elbow.determine_time(elbow.determine_steps(delta_beta_prime)), wrist.determine_time(wrist.determine_steps(delta_phi))])
+        
+        _thread.start_new_thread(shoulder.spin, (abs(shoulder.determine_steps(delta_tau)), sign(shoulder.determine_steps(delta_tau)), time))
+        _thread.start_new_thread(elbow.spin, (abs(elbow.determine_steps(delta_beta_prime)), sign(elbow.determine_steps(delta_beta_prime)), time))
+        _thread.start_new_thread(wrist.spin, (abs(wrist.determine_steps(delta_phi)), sign(wrist.determine_steps(delta_phi)), time))
+        
+        while shoulder.fini == False or elbow.fini == False or wrist.fini == False:
+            time.sleep(0.1)
+            
+        shoulder.fini = False
+        elbow.fini = False
+        wrist.fini = False
+        
+        self.alpha = alpha_but
+        self.theta = theta_but
+        self.tau = tau_but
+        self.beta = beta_but
+        self.beta_prime = beta_prime_but
+        self.epsilon = epsilon_but
+        self.phi = phi_but
+        self.lambda = lambda_but
+        self.I_x = I_x_but
+        self.I_y = I_y_but
+        self.M_x = M_x_but
+        self.M_y = M_y_but
 
 #Creation des fonctions
 def sign(x): #Attention il faut bien configurer les moteurs tels que quand dir == HIGH, ils tournent dans le sens anti-horraire / trigonometrique
@@ -64,58 +161,6 @@ def sign(x): #Attention il faut bien configurer les moteurs tels que quand dir =
         return 0
     else:
         return 1
-
-
-def spin_motor_1(n_steps, direction, speed): #motor at O
-  global motor_1_fini
-  motor_1_pin_dir.value(direction)
-  for i in range(n_steps):
-    motor_1_pin_pul.value(HIGH)
-    time.sleep(speed)
-    motor_1_pin_pul.value(LOW)
-    time.sleep(speed)
-  motor_1_fini = True
-    
-
-def spin_motor_2(n_steps, direction, speed): #motor at I
-  global motor_2_fini
-  motor_2_pin_dir.value(direction)
-  for i in range(n_steps):
-    motor_2_pin_pul.value(HIGH)
-    time.sleep(speed)
-    motor_2_pin_pul.value(LOW)
-    time.sleep(speed)
-  motor_2_fini = True
-
-def spin_motor_3(n_steps, direction, speed): #motor at M
-  global motor_3_fini
-  motor_3_pin_dir.value(direction)
-  for i in range(n_steps):
-    motor_3_pin_pul.value(HIGH)
-    time.sleep(speed)
-    motor_3_pin_pul.value(LOW)
-    time.sleep(speed)
-  motor_3_fini = True
-
-def spin_motor_4(n_steps, direction): #motor for rail
-  global motor_4_fini
-  motor_4_pin_dir.value(direction)
-  for i in range(n_steps):
-    motor_4_pin_pul.value(HIGH)
-    time.sleep(0.5) #a changer si besoin
-    motor_4_pin_pul.value(LOW)
-    time.sleep(0.5) #a changer si besoin
-  motor_4_fini = True
-
-def spin_motor_5(n_steps, direction): #motor on rotating platform
-  global motor_5_fini
-  motor_5_pin_dir.value(direction)
-  for i in range(n_steps):
-    motor_5_pin_pul.value(HIGH)
-    time.sleep(0.5) #a changer si besoin
-    motor_5_pin_pul.value(LOW)
-    time.sleep(0.5) #a changer si besoin
-  motor_5_fini = True
 
 def turn_on_vacuum():
   vacuum_signal.value(HIGH)
@@ -136,63 +181,6 @@ def turn_off_shredder_mixer():
   shredder_signal.value(HIGH)
   time.sleep(1)
   shredder_signal.value(LOW)  
-
-def move(M_x_but, M_y_but, phi_but):
-  global alpha_actuel, theta_actuel, tau_actuel, beta_actuel, beta_prime_actuel, epsilon_actuel, phi_actuel, lambda_actuel, I_x_actuel, I_y_actuel, M_x_actuel, M_y_actuel, motor_1_fini, motor_2_fini, motor_3_fini
-  #calculs d'angles intermediaires
-  alpha_but = 
-  theta_but = 
-  tau_but = 
-  beta_but = 
-  beta_prime_but = 
-  epsilon_but =  
-  I_x_but = 
-  I_y_but = 
-
-  #calcul d'angles final
-  delta_theta = 
-  delta_beta_prime = 
-  delta_phi = 
-
-  #calcul de pas associes
-  motor_1_steps = 
-  motor_2_steps = 
-  motro_3_steps = 
-  
-  #Calculs vitesses de chaque moteur
-  motor_1_speed = 
-  motor_2_speed =
-  motor_3_speed =
-  
-  motor_1_fini = False
-  motor_2_fini = False
-  motor_3_fini = False
-  
-  _thread.start_new_thread(spin_motor_1, (abs(moteur_1_steps), sign(moteur_1_steps), motor_1_speed))
-  _thread.start_new_thread(spin_motor_2, (abs(moteur_2_steps), sign(moteur_2_steps), motor_2_speed))
-  _thread.start_new_thread(spin_motor_3, (abs(moteur_3_steps), sign(moteur_3_steps), motor_3_speed))
-
-  while motor_1_fini == False or motor_2_fini == False or motor_3_fini == False:
-    time.sleep(1)
-  
-  alpha_actuel = alpha_but
-  theta_actuel = theta_but
-  tau_actuel = tau_but
-  beta_actuel = beta_but
-  beta_prime_actuel = beta_prime_but
-  epsilon_actuel = epsilon_but
-  phi_actuel = phi_but
-  lambda_actuel = lambda_but
-  I_x_actuel = I_x_but
-  I_y_actuel = I_y_but
-  M_x_actuel = M_x_but
-  M_y_actuel = M_y_but
-
-def close_claw():
-
-
-def open_claw():
-  
 
 def neutral():
   move()
