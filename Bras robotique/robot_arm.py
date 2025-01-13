@@ -17,7 +17,7 @@ Dans ce code, nous allons creer :
 
 #Set-up
 #importation des librairies
-import machine
+from machine import Pin
 import time
 import math
 import _thread
