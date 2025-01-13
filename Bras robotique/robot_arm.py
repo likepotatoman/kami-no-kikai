@@ -17,10 +17,9 @@ Dans ce code, nous allons creer :
 
 #Set-up
 #importation des librairies
+import asyncio
 from machine import Pin
-import time
 import math
-import _thread
 
 #Initialisation des pins
 signal_in_pin = 
@@ -47,22 +46,20 @@ servo_PWM_pin =
 class Motor:
     def __init__(self, motor_pin_dir, motor_pin_pul, gear_ratio):
         self.angle = 0
-        self.fini = False
         self.pin_dir = motor_pin_din
         self.pin_pul = motor_pin_pul
         self.gear_ratio = gear_ratio
         self. fastest_step_time = 
         self.full_spin_time = self.gear_ratio * 200 * self.fastest_step_time
         
-    def spin(self, n_steps, direction, total_time):
+    async def spin(self, n_steps, direction, total_time):
         self.pin_dir.value(direction)
-        one_step = round(total_time / n_steps)
+        one_step = total_time / n_steps
         for i in range(n_steps):
-            self.pin_pul.value(HIGH)
-            time.sleep(one_step / 2)
-            self.pin_pul.value(LOW)
-            time.sleep(one_step / 2)
-        self.fini = True
+            self.pin_pul.value(1)
+            await asyncio.sleep(one_step / 2)
+            self.pin_pul.value(0)
+            await asyncio.sleep(one_step / 2)
 
     def determine_time(self, steps):
         return round(abs(steps) * self.fastest_step_time)
@@ -101,23 +98,25 @@ claw = Servo(servo_PWM_pin)
 
 class Robot:
     def __init__(self):
-        self.position_rail = 
-        self.sukata_position = 
-        self.alpha = 
-        self.theta = 
-        self.tau = 
-        self.beta = 
-        self.beta_prime = 
-        self.epsilon = 
-        self.phi = 
-        self.lambda = 
-        self.I_x = 
-        self.I_y = 
-        self.M_x = 
-        self.M_y =
+        self.position_rail = 0
+        self.sukata_position_x = 0
+        self.sukata_position_y = -100
+        self.alpha = 0
+        self.theta = 0
+        self.tau = 0
+        self.beta = 180
+        self.beta_prime = 0
+        self.epsilon = 0
+        self.phi = 0
+        self.lambda = 0
+        self.I_x = 0
+        self.I_y = -50
+        self.M_x = 0
+        self.M_y = -100
 
-    def move(self, M_x_but, M_y_but, phi_but):
+    def move(self, M_x_but, M_y_but, phi_but, position_type = 0):
         #calculs d'angles intermediaires
+        distance_OM = math.sqrt(M_x_but**2 + M_y_but**2)
         alpha_but = 
         theta_but = 
         tau_but = 
@@ -133,18 +132,18 @@ class Robot:
         delta_phi =  
         
         #Calculs vitesses de chaque moteur
-        time = max([shoulder.determine_time(shoulder.determine_steps(delta_tau)), elbow.determine_time(elbow.determine_steps(delta_beta_prime)), wrist.determine_time(wrist.determine_steps(delta_phi))])
-        
-        _thread.start_new_thread(shoulder.spin, (abs(shoulder.determine_steps(delta_tau)), sign(shoulder.determine_steps(delta_tau)), time))
-        _thread.start_new_thread(elbow.spin, (abs(elbow.determine_steps(delta_beta_prime)), sign(elbow.determine_steps(delta_beta_prime)), time))
-        _thread.start_new_thread(wrist.spin, (abs(wrist.determine_steps(delta_phi)), sign(wrist.determine_steps(delta_phi)), time))
-        
+        delta_time = max([shoulder.determine_time(shoulder.determine_steps(delta_tau)), elbow.determine_time(elbow.determine_steps(delta_beta_prime)), wrist.determine_time(wrist.determine_steps(delta_phi))])
+
+        async def simultanious_spin(delta_tau, delta_beta_prime, delta_phi, delta_time):
+           task1 = asyncio.create_task(shoulder.spin(abs(shoulder.determine_steps(delta_tau), sign(shoulder.determine_steps(delta_tau)), delta_time))
+           task2 = asyncio.create_task(elbow.spin(abs(elbow.determine_steps(delta_beta_prime)), sign(elbow.determine_steps(delta_beta_prime)), delta_time))
+           task3 = asyncio.create_task(elbow.spin(abs(wrist.determine_steps(delta_phi)), sign(wrist.determine_steps(delta_phi)), delta_time))
+           await task1
+           await task2
+
+        asyncio.run(simultanious_spin(delta_tau, delta_beta_prime, delta_phi, delta_time))
         while shoulder.fini == False or elbow.fini == False or wrist.fini == False:
             time.sleep(0.1)
-            
-        shoulder.fini = False
-        elbow.fini = False
-        wrist.fini = False
         
         self.alpha = alpha_but
         self.theta = theta_but
