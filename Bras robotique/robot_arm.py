@@ -45,7 +45,7 @@ servo_PWM_pin =
 
 #creation des classes et objets
 class Motor:
-    def __inti__(self, motor_pin_dir, motor_pin_pul, gear_ratio):
+    def __init__(self, motor_pin_dir, motor_pin_pul, gear_ratio):
         self.angle = 0
         self.fini = False
         self.pin_dir = motor_pin_din
