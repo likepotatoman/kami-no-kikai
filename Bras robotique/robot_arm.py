@@ -91,7 +91,13 @@ class Servo:
         duty_cycle = self.delta_DC * percentage + self.min_DC
         self.PWM_pin.duty_u16(round(duty_cycle))
 
-claw = Servo(servo_PWM_pin):
+    def open(self):
+        self.move(0)
+
+    def close(self):
+        self.move(180)
+
+claw = Servo(servo_PWM_pin)
 
 class Robot:
     def __init__(self):
