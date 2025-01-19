@@ -126,6 +126,14 @@ class Armoire:
       else :
         self.matrice[self.valeur_renvoye[0]][self.valeur_renvoye[1]] = -1
 
+  def __str__(self):
+    info = "matrice actuelle : {self.matrice} \netat sukata = {self.etat_sukata} \nvaleur renvoye : {self.valeur_renvoye} \n\n\n"
+    info_sup = "informations supplementaire :"
+    info_lignes = "\npins ligne etats actuels : \n  1 : {self.pin_ligne_1.value()} \n  2 : {self.pin_ligne_2.value()} \n  3 : {self.pin_ligne_3.value()} \n  4 : {self.pin_ligne_4.value()}"
+    info_colonnes = "\n\npins colonne etats actuels : \n  1 : {self.pin_colonne_1.value()} \n  2 : {self.pin_colonne_2.value()} \n  3 : {self.pin_colonne_3.value()} \n  4 : {self.pin_colonne_4.value()}"
+    all_strings = info + info_sup + info_lignes + info_colonnes
+    return fall_strings
+
 #Appel et execution du code    
 armoire = Armoire(signal_pin, pin_colonne_1, pin_colonne_2, pin_colonne_3, pin_colonne_4, pin_ligne_1, pin_ligne_2, pin_ligne_3, pin_ligne_4, pin_info_sup)
 armoire.run()
