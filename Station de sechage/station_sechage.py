@@ -42,7 +42,6 @@ class Armoire:
       self.pin_ligne_2 = pin_ligne_2
       self.pin_ligne_3 = pin_ligne_3
       self.pin_ligne_4 = pin_ligne_4
-      self.valeur_renvoye = None
   
   def allumer_pin(self, pos, val):
     if pos[0] == 0:
@@ -50,17 +49,17 @@ class Armoire:
     else:
       self.pin_ligne_1.value(0)
 
-    if pos[0] == 0:
+    if pos[0] == 1:
       self.pin_ligne_2.value(1)
     else:
       self.pin_ligne_2.value(0)
     
-    if pos[0] == 0:
+    if pos[0] == 2:
       self.pin_ligne_3.value(1)
     else:
       self.pin_ligne_3.value(0)
 
-    if pos[0] == 0:
+    if pos[0] == 3:
       self.pin_ligne_4.value(1)
     else:
       self.pin_ligne_4.value(0)
@@ -70,17 +69,17 @@ class Armoire:
     else:
       self.pin_colonne_1.value(0)
 
-    if pos[1] == 0:
+    if pos[1] == 1:
       self.pin_colonne_2.value(1)
     else:
       self.pin_colonne_2.value(0)
 
-    if pos[1] == 0:
+    if pos[1] == 2:
       self.pin_colonne_3.value(1)
     else:
       self.pin_colonne_3.value(0)
 
-    if pos[1] == 0:
+    if pos[1] == 3:
       self.pin_colonne_4.value(1)
     else:
       self.pin_colonne_4.value(0)
@@ -96,12 +95,12 @@ class Armoire:
             self.etat_sukata = 0
             self.valeur_renvoye = [i,j]
             self.allumer_pin([i,j], 0)
-            return
+            return None
           elif self.est_vide(i, j):
             self.etat_sukata = 1
             self.valeur_renvoye = [i,j]
             self.allumer_pin([i,j], 1)
-            return
+            return None
 
   def attendre_1_seconde(self):
     time.sleep(1)
@@ -110,11 +109,11 @@ class Armoire:
         if self.matrice[i][j] > 0:
           self.matrice[i][j] -= 1
 
-  def est_sec(self, col, ligne):
-    return self.matrice[col][ligne] == 0
+  def est_sec(self, ligne, col):
+    return self.matrice[ligne][col] == 0
 
-  def est_vide(self, col, ligne):
-    return self.matrice[col][ligne] == -1
+  def est_vide(self, ligne, col):
+    return self.matrice[ligne][col] == -1
 
   def run(self):
     while True:
