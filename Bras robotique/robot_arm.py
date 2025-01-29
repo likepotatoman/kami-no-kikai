@@ -98,6 +98,8 @@ claw = Servo(servo_PWM_pin)
 
 class Robot:
     def __init__(self):
+        self.arm_1_length = 50
+        self.arm_2_length = 50
         self.position_rail = 0
         self.sukata_position_x = 0
         self.sukata_position_y = -100
