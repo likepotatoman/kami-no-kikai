@@ -118,19 +118,51 @@ class Robot:
 
     def move(self, M_x_but, M_y_but, phi_but, position_type = 0):
         #calculs d'angles intermediaires
-        distance_OM = math.sqrt(M_x_but**2 + M_y_but**2)
-        alpha_but = 
-        theta_but = 
-        tau_but = 
-        beta_but = 
-        beta_prime_but = 
+    def move(self, M_x_but, M_y_but, phi_but, position_type = 0):
+        #calculs d'angles intermediaires
+        
+        #On definit certaines droites et segments utiles pour des calculs futurs, B(0, -100)
+        OM = math.sqrt(M_x_but**2 + M_y_but**2)
+        BM = math.sqrt(M_x_but**2 + (M_y_but + 100)**2)
+        BO = 100 
+        
+        #On cherche alpha, l'angle relatif que le moteur doit prendre par rapport a la droite OM
+        if position_type == 0:
+            alpha_but = math.degrees( math.acos((self.arm_1_length**2 +  OM**2 - self.arm_2_length**2) / (2 * self.arm_2_length * OM)) )
+        else:
+            alpha_but = math.degrees( - math.acos((self.arm_1_length**2 +  OM**2 - self.arm_2_length**2) / (2 * self.arm_2_length * OM)) )
+        
+        #On cherche theta, l'angle entre la verticale et la semi-doite [OM) dans le sens trigonometrique
+        if M_x_but > 0:
+            theta_but = math.degrees( math.acos((OM**2 + BO**2 - BM**2) / (2 * BO * OM)) ) 
+        elif M_x_but < 0:
+            theta_but = math.degrees( 2 * math.pi - math.acos((OM**2 + BO**2 - BM**2) / (2 * BO * OM)) )
+        else:
+            if M_y_but > 0:
+                theta_but = 180
+            else : 
+                theta_but = 0
+        
+        #On en deduit tau, l'angle que doit prendre le moteur 1 : shoulder
+        tau_but = theta_but + alpha_but
+        
+        #On cherche beta, normalement nous pouvons trouver facilement mais je generalise pour des bras de longueur differentes
+        beta_but = math.degrees( math.acos((self.arm_1_length**2+ self.arm_2_length**2 - OM**2 ) / (2 * self.arm_2_length * self.arm_1_length)) )
+
+        #On peut donc determiner beta_prime, l'angle que doit prendre le moteur 2 : elbow
+        if position_type == 0:
+            beta_prime_but = -(180 - beta_but)
+        else : 
+            beta_prime_but = 180 - beta_but
+
+        #On determine epsilone decoulant de cette nouvelle configuration
         epsilon_but =  
         I_x_but = 
         I_y_but = 
         
         #calcul d'angles final
-        delta_tau = 
-        delta_beta_prime = 
+        delta_tau = tau_but - self.tau
+        delta_beta_prime = beta_prime_but - self.beta_prime
         delta_phi =  
         
         #Calculs vitesses de chaque moteur
