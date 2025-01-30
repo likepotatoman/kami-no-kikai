@@ -61,7 +61,7 @@ class Motor:
         return round(abs(steps) * self.fastest_step_time)
 
     def determine_steps(self, angle):
-        return round((angle / 360) * self.full_spin_time)
+        return round((angle / 360) * self.gear_ratio * 200)
         
 
 shoulder = Motor(motor_1_pin_dir, motor_1_pin_pul, motor_1_gear_ratio)
@@ -97,20 +97,9 @@ class Robot:
         self.arm_1_length = 50
         self.arm_2_length = 50
         self.position_rail = 0
-        self.sukata_position_x = 0
-        self.sukata_position_y = -100
-        self.alpha = 0
-        self.theta = 0
         self.tau = 0
-        self.beta = 180
         self.beta_prime = 0
-        self.epsilon = 0
-        self.phi = 0
         self.lambda = 0
-        self.I_x = 0
-        self.I_y = -50
-        self.M_x = 0
-        self.M_y = -100
 
     def move(self, M_x_but, M_y_but, phi_but, position_type = 0):
         #calculs d'angles intermediaires
@@ -172,9 +161,9 @@ class Robot:
                 epsilon_but = 
         
         #calcul d'angles final
-        delta_tau = tau_but - self.tau
-        delta_beta_prime = beta_prime_but - self.beta_prime
-        delta_phi =  phi_but - (epsilon + self.lambda)
+        delta_tau = optimize_angle(tau_but - self.tau)
+        delta_beta_prime = optimize_angle(beta_prime_but - self.beta_prime)
+        delta_phi =  optimize_angle(phi_but - (epsilon + self.lambda))
         
         #Calculs vitesses de chaque moteur
         delta_time = max([shoulder.determine_time(shoulder.determine_steps(delta_tau)), elbow.determine_time(elbow.determine_steps(delta_beta_prime)), wrist.determine_time(wrist.determine_steps(delta_phi))])
@@ -188,21 +177,10 @@ class Robot:
            await task3
 
         asyncio.run(simultanious_spin(delta_tau, delta_beta_prime, delta_phi, delta_time))
-        while shoulder.fini == False or elbow.fini == False or wrist.fini == False:
-            time.sleep(0.1)
         
-        self.alpha = alpha_but
-        self.theta = theta_but
         self.tau = tau_but
-        self.beta = beta_but
         self.beta_prime = beta_prime_but
-        self.epsilon = epsilon_but
-        self.phi = phi_but
         self.lambda = lambda_but
-        self.I_x = I_x_but
-        self.I_y = I_y_but
-        self.M_x = M_x_but
-        self.M_y = M_y_but
 
 #Creation des fonctions
 def optimize_angle(angle):
