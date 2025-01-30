@@ -155,10 +155,13 @@ class Robot:
         else : 
             beta_prime_but = 180 - beta_but
 
+        #On calcule les coordonnees de I
+        I_x_but = math.cos(math.radians(tau_but - 90)) * 50
+        I_y_but = math.sin(math.radians(tau_but - 90)) * 50
+     
         #On determine epsilone decoulant de cette nouvelle configuration
         epsilon_but =  
-        I_x_but = 
-        I_y_but = 
+
         
         #calcul d'angles final
         delta_tau = tau_but - self.tau
