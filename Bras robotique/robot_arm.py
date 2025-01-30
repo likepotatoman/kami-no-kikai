@@ -38,10 +38,6 @@ motor_5_pin_dir =
 motor_5_pin_pul = 
 servo_PWM_pin = 
 
-#Initialisation des variables des positions initiales
-
- 
-
 #creation des classes et objets
 class Motor:
     def __init__(self, motor_pin_dir, motor_pin_pul, gear_ratio):
@@ -158,14 +154,27 @@ class Robot:
         I_y_but = math.sin(math.radians(tau_but - 90)) * 50
      
         #On determine epsilone decoulant de cette nouvelle configuration
-        epsilon_but =  
-
-        
+        delta_x_IM = M_x_but - I_x_but
+        delta_y_IM = M_y_but - I_y_but
+        if delta_x_IM > 0:
+            if delta_y_IM > 0:
+                #M above to the right
+                epsilon_but = 
+            else :
+                #M below to the right
+                epsilon_but = 
+        else : 
+            if delta_y_IM > 0:
+                #M above to the left
+                epsilon_but = 
+            else : 
+                #Mbelow to the left
+                epsilon_but = 
         
         #calcul d'angles final
         delta_tau = tau_but - self.tau
         delta_beta_prime = beta_prime_but - self.beta_prime
-        delta_phi =  
+        delta_phi =  phi_but - (epsilon + self.lambda)
         
         #Calculs vitesses de chaque moteur
         delta_time = max([shoulder.determine_time(shoulder.determine_steps(delta_tau)), elbow.determine_time(elbow.determine_steps(delta_beta_prime)), wrist.determine_time(wrist.determine_steps(delta_phi))])
@@ -196,6 +205,11 @@ class Robot:
         self.M_y = M_y_but
 
 #Creation des fonctions
+def optimize_angle(angle):
+    if abs(angle % 360) < abs((angle % 360) - 360):
+        return angle % 360
+    return angle % 360 - 360
+
 def sign(x): #Attention il faut bien configurer les moteurs tels que quand dir == HIGH, ils tournent dans le sens anti-horraire / trigonometrique
     if x > 0:
         return 1
