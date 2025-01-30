@@ -159,6 +159,7 @@ class Robot:
      
         #On determine epsilone decoulant de cette nouvelle configuration
         epsilon_but =  
+
         
         
         #calcul d'angles final
