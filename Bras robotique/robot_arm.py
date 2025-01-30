@@ -118,8 +118,6 @@ class Robot:
 
     def move(self, M_x_but, M_y_but, phi_but, position_type = 0):
         #calculs d'angles intermediaires
-    def move(self, M_x_but, M_y_but, phi_but, position_type = 0):
-        #calculs d'angles intermediaires
         
         #On definit certaines droites et segments utiles pour des calculs futurs, B(0, -100)
         OM = math.sqrt(M_x_but**2 + M_y_but**2)
@@ -161,7 +159,7 @@ class Robot:
      
         #On determine epsilone decoulant de cette nouvelle configuration
         epsilon_but =  
-
+        
         
         #calcul d'angles final
         delta_tau = tau_but - self.tau
@@ -177,6 +175,7 @@ class Robot:
            task3 = asyncio.create_task(elbow.spin(abs(wrist.determine_steps(delta_phi)), sign(wrist.determine_steps(delta_phi)), delta_time))
            await task1
            await task2
+           await task3
 
         asyncio.run(simultanious_spin(delta_tau, delta_beta_prime, delta_phi, delta_time))
         while shoulder.fini == False or elbow.fini == False or wrist.fini == False:
