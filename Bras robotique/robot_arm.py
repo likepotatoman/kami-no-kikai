@@ -182,6 +182,9 @@ class Robot:
         self.beta_prime = beta_prime_but
         self.lambda = lambda_but
 
+robot = Robot()
+ 
+
 #Creation des fonctions
 def optimize_angle(angle):
     if abs(angle % 360) < abs((angle % 360) - 360):
