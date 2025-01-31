@@ -169,7 +169,7 @@ class Robot:
         delta_time = max([shoulder.determine_time(shoulder.determine_steps(delta_tau)), elbow.determine_time(elbow.determine_steps(delta_beta_prime)), wrist.determine_time(wrist.determine_steps(delta_phi))])
 
         async def simultanious_spin(delta_tau, delta_beta_prime, delta_phi, delta_time):
-           task1 = asyncio.create_task(shoulder.spin(abs(shoulder.determine_steps(delta_tau), sign(shoulder.determine_steps(delta_tau)), delta_time))
+           task1 = asyncio.create_task(shoulder.spin(abs(shoulder.determine_steps(delta_tau)), sign(shoulder.determine_steps(delta_tau)), delta_time))
            task2 = asyncio.create_task(elbow.spin(abs(elbow.determine_steps(delta_beta_prime)), sign(elbow.determine_steps(delta_beta_prime)), delta_time))
            task3 = asyncio.create_task(elbow.spin(abs(wrist.determine_steps(delta_phi)), sign(wrist.determine_steps(delta_phi)), delta_time))
            await task1
