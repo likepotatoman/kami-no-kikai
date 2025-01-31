@@ -36,7 +36,11 @@ motor_4_pin_dir =
 motor_4_pin_pul = 
 motor_5_pin_dir = 
 motor_5_pin_pul = 
-servo_PWM_pin = 
+servo_PWM_pin =
+position_limit_switch_output_pin =
+position_limit_switch_input_pin =
+claw_limit_switch_output_pin =
+claw_limit_switch_input_pin =
 
 #creation des classes et objets
 class Motor:
@@ -71,6 +75,18 @@ body = Motor(motor_4_pin_dir, motor_4_pin_pul, motor_4_gear_ratio)
 legs = Motor(motor_5_pin_dir, motor_5_pin_pul, motor_5_gear_ratio)
 
 
+class Limit_Switch:
+    def __init__(self, output_pin, input_pin):
+        output_pin.value(1)
+        self.input_pin = input_pin
+    
+    def state(self):
+        return self.input_pin.value()
+
+position_limit_switch = Limit_Switch(position_limit_switch_output_pin, position_limit_switch_input_pin)
+claw_limit_switch = Limit_Switch(claw_limit_switch_output_pin, claw_limit_switch_input_pin)
+
+
 class Servo:
     def __init__(self, PWM_pin, min_PW, max_PW): #PW are in ms
         self.PWM_pin = PWM(PWM_pin)
@@ -94,12 +110,13 @@ claw = Servo(servo_PWM_pin)
 
 class Robot:
     def __init__(self):
+        
         self.arm_1_length = 50
         self.arm_2_length = 50
         self.position_rail = 0
         self.tau = 0
         self.beta_prime = 0
-        self.lambda = 0
+        self.sigma = 0
 
     def move(self, M_x_but, M_y_but, phi_but, position_type = 0):
         #calculs d'angles intermediaires
@@ -163,7 +180,7 @@ class Robot:
         #calcul d'angles final
         delta_tau = optimize_angle(tau_but - self.tau)
         delta_beta_prime = optimize_angle(beta_prime_but - self.beta_prime)
-        delta_phi =  optimize_angle(phi_but - (epsilon + self.lambda))
+        delta_phi =  optimize_angle(phi_but - (epsilon + self.sigma))
         
         #Calculs vitesses de chaque moteur
         delta_time = max([shoulder.determine_time(shoulder.determine_steps(delta_tau)), elbow.determine_time(elbow.determine_steps(delta_beta_prime)), wrist.determine_time(wrist.determine_steps(delta_phi))])
@@ -171,7 +188,7 @@ class Robot:
         async def simultanious_spin(delta_tau, delta_beta_prime, delta_phi, delta_time):
            task1 = asyncio.create_task(shoulder.spin(abs(shoulder.determine_steps(delta_tau)), sign(shoulder.determine_steps(delta_tau)), delta_time))
            task2 = asyncio.create_task(elbow.spin(abs(elbow.determine_steps(delta_beta_prime)), sign(elbow.determine_steps(delta_beta_prime)), delta_time))
-           task3 = asyncio.create_task(elbow.spin(abs(wrist.determine_steps(delta_phi)), sign(wrist.determine_steps(delta_phi)), delta_time))
+           task3 = asyncio.create_task(wrist.spin(abs(wrist.determine_steps(delta_phi)), sign(wrist.determine_steps(delta_phi)), delta_time))
            await task1
            await task2
            await task3
@@ -180,10 +197,40 @@ class Robot:
         
         self.tau = tau_but
         self.beta_prime = beta_prime_but
-        self.lambda = lambda_but
+        self.sigma = phi_but - epsilon
+        
+    def negative_rail_move(self):
+        while position_limit_switch.state() == 1: 
+            await legs.spin(1, 0, legs.fastest_step_time)
+            
+        while position_limit_switch.state() == 0: 
+            await legs.spin(1, 0, legs.fastest_step_time)
+
+    def positive_rail_move(self):
+        while position_limit_switch.state() == 1: 
+            await legs.spin(1, 1, legs.fastest_step_time)
+            
+        while position_limit_switch.state() == 0: 
+            await legs.spin(1, 1, legs.fastest_step_time)
+    
+
+    def rail_move(self, goal_position):
+        while goal_position != self.rail_position: 
+            if goal_position > self.rail_position:
+                positive_rail_move()
+                self.rail_position += 1
+            else : 
+                negative_rail_move()
+                self.rail_position -= 1
+
+    def rotate_quarter_left(self):
+        await body.spin(body.determine_steps(90), 0, 5)
+
+    def rotate_quarter_right(self):
+        await body.spin(body.determine_steps(90), 0, 5)
 
 robot = Robot()
- 
+
 
 #Creation des fonctions
 def optimize_angle(angle):
@@ -285,29 +332,6 @@ def drop_paper():
   turn_off_vacuum()
   neutral()
 
-def negative_rail_move():
-  while #limit swtch on : 
-    spin_motor_4( , #neg)
-
-def positive_rail_move():
-  while #limit swtch on : 
-    spin_motor_4( , #pos)
-
-def rail_move(goal_position):
-  global position
-  while goal_position != position : 
-    if goal_position > position:
-      positive_rail_move()
-    else : 
-      negative_rail_move():
-
-def rotate_quarter_left():
-  spin_motor_5(#arbitraire, 1)
-
-def rotate_quarter_right():
-  spin_motor_5(#arbitraire, 0)
-
-
 def pass_cycle():
   rail_move(#position du  vacuum)
   recup_vacuum()
@@ -320,11 +344,6 @@ def pass_cycle():
   drop_vacuum()
   rail_move(#position du mixer)
   recup_mixer()
-  
-  
-  
 
-  
-#Loop
-while True:
-  
+      
+robot.run()
