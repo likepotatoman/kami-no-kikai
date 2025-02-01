@@ -29,7 +29,6 @@ armoire_col_4 =
 armoire_lin_1 =
 armoire_lin_2 =
 armoire_lin_3 =
-armoire_lin_4 =
 armoire_etat = 
 signal_in_pin = 
 signal_out_pin =
