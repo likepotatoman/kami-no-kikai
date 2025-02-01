@@ -54,7 +54,7 @@ claw_limit_switch_input_pin =
 class Motor:
     def __init__(self, motor_pin_dir, motor_pin_pul, gear_ratio):
         self.angle = 0
-        self.pin_dir = motor_pin_din
+        self.pin_dir = motor_pin_dir
         self.pin_pul = motor_pin_pul
         self.gear_ratio = gear_ratio
         self. fastest_step_time = 0.001
