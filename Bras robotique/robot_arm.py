@@ -22,10 +22,18 @@ from machine import Pin
 import math
 
 #Initialisation des pins
+armoire_col_1 =
+armoire_col_2 =
+armoire_col_3 =
+armoire_col_4 =
+armoire_lin_1 =
+armoire_lin_2 =
+armoire_lin_3 =
+armoire_lin_4 =
+armoire_etat = 
 signal_in_pin = 
 signal_out_pin =
-vacuum_signal =
-shredder_signal = 
+prep_station_signal =
 motor_1_pin_dir = 
 motor_1_pin_pul = 
 motor_2_pin_dir = 
@@ -37,9 +45,7 @@ motor_4_pin_pul =
 motor_5_pin_dir = 
 motor_5_pin_pul = 
 servo_PWM_pin =
-position_limit_switch_output_pin =
 position_limit_switch_input_pin =
-claw_limit_switch_output_pin =
 claw_limit_switch_input_pin =
 
 #creation des classes et objets
@@ -49,7 +55,7 @@ class Motor:
         self.pin_dir = motor_pin_din
         self.pin_pul = motor_pin_pul
         self.gear_ratio = gear_ratio
-        self. fastest_step_time = 
+        self. fastest_step_time = 0.001
         self.full_spin_time = self.gear_ratio * 200 * self.fastest_step_time
         
     async def spin(self, n_steps, direction, total_time):
@@ -76,15 +82,14 @@ legs = Motor(motor_5_pin_dir, motor_5_pin_pul, motor_5_gear_ratio)
 
 
 class Limit_Switch:
-    def __init__(self, output_pin, input_pin):
-        output_pin.value(1)
+    def __init__(self, input_pin):
         self.input_pin = input_pin
     
     def state(self):
         return self.input_pin.value()
 
-position_limit_switch = Limit_Switch(position_limit_switch_output_pin, position_limit_switch_input_pin)
-claw_limit_switch = Limit_Switch(claw_limit_switch_output_pin, claw_limit_switch_input_pin)
+position_limit_switch = Limit_Switch(position_limit_switch_input_pin)
+claw_limit_switch = Limit_Switch(claw_limit_switch_input_pin)
 
 
 class Servo:
@@ -100,7 +105,7 @@ class Servo:
         duty_cycle = self.delta_DC * percentage + self.min_DC
         self.PWM_pin.duty_u16(round(duty_cycle))
 
-    def open(self):
+    def release(self):
         self.move(0)
 
     def close(self):
@@ -117,6 +122,9 @@ class Robot:
         self.tau = 0
         self.beta_prime = 0
         self.sigma = 0
+        self.M_x = 0
+        self.M_y = -100
+        self position_type = 0
 
     def move(self, M_x_but, M_y_but, phi_but, position_type = 0):
         #calculs d'angles intermediaires
@@ -165,17 +173,17 @@ class Robot:
         if delta_x_IM > 0:
             if delta_y_IM > 0:
                 #M above to the right
-                epsilon_but = 
+                epsilon = 90 + math.degrees(math.tan(delta_y_IM / delta_x_IM))
             else :
                 #M below to the right
-                epsilon_but = 
+                epsilon = 90 - math.degrees(math.tan(delta_y_IM / delta_x_IM))
         else : 
             if delta_y_IM > 0:
                 #M above to the left
-                epsilon_but = 
+                epsilon = 270 - math.degrees(math.tan(delta_y_IM / delta_x_IM))
             else : 
                 #Mbelow to the left
-                epsilon_but = 
+                epsilon = 270 + math.degrees(math.tan(delta_y_IM / delta_x_IM))
         
         #calcul d'angles final
         delta_tau = optimize_angle(tau_but - self.tau)
@@ -198,6 +206,9 @@ class Robot:
         self.tau = tau_but
         self.beta_prime = beta_prime_but
         self.sigma = phi_but - epsilon
+        self.M_x = M_x_but
+        self.M_y = M_y_but
+        self.position_type = position_type
         
     def negative_rail_move(self):
         while position_limit_switch.state() == 1: 
@@ -228,6 +239,13 @@ class Robot:
 
     def rotate_quarter_right(self):
         await body.spin(body.determine_steps(90), 0, 5)
+        
+    def lower_claw(self):
+      while claw_limit_switch.state() == 0 :
+        move(self.M_x, self.M_y - 0.1, 0)
+      
+    def raise_claw(self):
+      move(self.M_x, self.M_y + 5, 0)
 
 robot = Robot()
 
@@ -238,7 +256,7 @@ def optimize_angle(angle):
         return angle % 360
     return angle % 360 - 360
 
-def sign(x): #Attention il faut bien configurer les moteurs tels que quand dir == HIGH, ils tournent dans le sens anti-horraire / trigonometrique
+def sign(x): #Attention il faut bien configurer les moteurs tels que quand dir == 1, ils tournent dans le sens anti-horraire / trigonometrique
     if x > 0:
         return 1
     elif x < 0:
@@ -276,13 +294,7 @@ def sukata_pass(n):
     move()
     move()
 
-def lower_claw():
-  while #limit swtch off :
-    goal_y = M_y_actuel - #valeur arbitraire
-    move(M_x_actuel, goal_y, 0)
-  
-def raise_claw():
-  move(M_x_actuel, M_y_actuel - #valeur arbitraire, 0)
+
 
 def recup_sukata():
   move()
@@ -303,9 +315,10 @@ def recup_mixer():
   raise_claw()
   neutral()
 
-def drop_mixer():
+def drop_mixer(self):
   move()
-  open_claw()
+  move()
+  claw.release()
   neutral()
 
 def recup_vacuum():
@@ -332,6 +345,9 @@ def drop_paper():
   turn_off_vacuum()
   neutral()
 
+
+
+
 def pass_cycle():
   rail_move(#position du  vacuum)
   recup_vacuum()
@@ -344,6 +360,10 @@ def pass_cycle():
   drop_vacuum()
   rail_move(#position du mixer)
   recup_mixer()
+  
+  
+  
 
-      
-robot.run()
+  
+#Loop
+while True:
