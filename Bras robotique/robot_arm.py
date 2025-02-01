@@ -22,28 +22,31 @@ from machine import Pin, PWM
 import math
 
 #Initialisation des pins
-armoire_col_1 =
-armoire_col_2 =
-armoire_col_3 =
-armoire_col_4 =
-armoire_lin_1 =
-armoire_lin_2 =
-armoire_lin_3 =
-armoire_etat = 
-signal_in_pin = 
-signal_out_pin =
-prep_station_signal =
-motor_1_pin_dir = 
-motor_1_pin_pul = 
-motor_2_pin_dir = 
-motor_2_pin_pul = 
-motor_3_pin_dir = 
-motor_3_pin_pul = 
-motor_4_pin_dir = 
-motor_4_pin_pul = 
-motor_5_pin_dir = 
-motor_5_pin_pul = 
-servo_PWM_pin =
+armoire_col_1 = Pin(, Pin.IN)
+armoire_col_2 = Pin(, Pin.IN)
+armoire_col_3 = Pin(, Pin.IN)
+armoire_col_4 = Pin(, Pin.IN)
+armoire_lin_1 = Pin(, Pin.IN)
+armoire_lin_2 = Pin(, Pin.IN)
+armoire_lin_3 = Pin(, Pin.IN)
+armoire_etat = Pin(, Pin.IN)
+prep_station_signal = Pin(, Pin.OUT)
+motor_1_pin_dir = Pin(, Pin.OUT)
+motor_1_pin_pul = Pin(, Pin.OUT)
+motor_1_gear_ratio = 
+motor_2_pin_dir = Pin(, Pin.OUT)
+motor_2_pin_pul = Pin(, Pin.OUT)
+motor_2_gear_ratio = 
+motor_3_pin_dir = Pin(, Pin.OUT)
+motor_3_pin_pul = Pin(, Pin.OUT)
+motor_3_gear_ratio = 
+motor_4_pin_dir = Pin(, Pin.OUT)
+motor_4_pin_pul = Pin(, Pin.OUT)
+motor_4_gear_ratio = 
+motor_5_pin_dir = Pin(, Pin.OUT)
+motor_5_pin_pul = Pin(, Pin.OUT)
+motor_5_gear_ratio = 
+servo_PWM_pin = Pin(, Pin.OUT)
 position_limit_switch_input_pin =
 claw_limit_switch_input_pin =
 
@@ -123,7 +126,7 @@ class Robot:
         self.sigma = 0
         self.M_x = 0
         self.M_y = -100
-        self position_type = 0
+        self.position_type = 0
 
     def move(self, M_x_but, M_y_but, phi_but, position_type = 0):
         #calculs d'angles intermediaires
