@@ -18,7 +18,7 @@ Dans ce code, nous allons creer :
 #Set-up
 #importation des librairies
 import asyncio
-from machine import Pin
+from machine import Pin, PWM
 import math
 
 #Initialisation des pins
