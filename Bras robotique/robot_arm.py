@@ -57,7 +57,7 @@ class Motor:
         self.pin_dir = motor_pin_dir
         self.pin_pul = motor_pin_pul
         self.gear_ratio = gear_ratio
-        self. fastest_step_time = 0.001
+        self. fastest_step_time = 0.015
         self.full_spin_time = self.gear_ratio * 200 * self.fastest_step_time
         
     async def spin(self, n_steps, direction, total_time):
