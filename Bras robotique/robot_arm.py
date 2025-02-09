@@ -1,3 +1,6 @@
+#IL RESTE LE PHI/SIGMA A VERIFIER, CODE INCOMPLET
+
+
 """
 Ce code va donc permettre de faire bouger un bras robotique avec 3 joints avec des stepper motor et une pince avec un servo quand il va recevoir un signal de la carte mere.
 Il va :
