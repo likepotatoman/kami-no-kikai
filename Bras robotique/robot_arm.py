@@ -17,7 +17,7 @@ Dans ce code, nous allons creer :
 
 #Set-up
 #importation des librairies
-import asyncio
+import time
 from machine import Pin, PWM
 import math
 
@@ -53,24 +53,18 @@ claw_limit_switch_input_pin =
 #creation des classes et objets
 class Motor:
     def __init__(self, motor_pin_dir, motor_pin_pul, gear_ratio):
-        self.angle = 0
         self.pin_dir = motor_pin_dir
         self.pin_pul = motor_pin_pul
         self.gear_ratio = gear_ratio
-        self. fastest_step_time = 0.015
-        self.full_spin_time = self.gear_ratio * 200 * self.fastest_step_time
+        self. fastest_step_time = 500 #in micro-seconds
         
-    async def spin(self, n_steps, direction, total_time):
+    def spin(self, n_steps, direction):
         self.pin_dir.value(direction)
-        one_step = total_time / n_steps
         for i in range(n_steps):
             self.pin_pul.value(1)
-            await asyncio.sleep(one_step / 2)
+            time.sleep_us(self.fastest_step_time)
             self.pin_pul.value(0)
-            await asyncio.sleep(one_step / 2)
-
-    def determine_time(self, steps):
-        return round(abs(steps) * self.fastest_step_time)
+            time.sleep_us(self.fastest_step_time)
 
     def determine_steps(self, angle):
         return round((angle / 360) * self.gear_ratio * 200)
@@ -129,88 +123,113 @@ class Robot:
         self.position_type = 0
 
     def move(self, M_x_but, M_y_but, phi_but, position_type = 0):
-        #calculs d'angles intermediaires
-        
-        #On definit certaines droites et segments utiles pour des calculs futurs, B(0, -100)
-        OM = math.sqrt(M_x_but**2 + M_y_but**2)
-        BM = math.sqrt(M_x_but**2 + (M_y_but + 100)**2)
-        BO = 100 
-        
-        #On cherche alpha, l'angle relatif que le moteur doit prendre par rapport a la droite OM
-        if position_type == 0:
-            alpha_but = math.degrees( math.acos((self.arm_1_length**2 +  OM**2 - self.arm_2_length**2) / (2 * self.arm_2_length * OM)) )
-        else:
-            alpha_but = math.degrees( - math.acos((self.arm_1_length**2 +  OM**2 - self.arm_2_length**2) / (2 * self.arm_2_length * OM)) )
-        
-        #On cherche theta, l'angle entre la verticale et la semi-doite [OM) dans le sens trigonometrique
-        if M_x_but > 0:
-            theta_but = math.degrees( math.acos((OM**2 + BO**2 - BM**2) / (2 * BO * OM)) ) 
-        elif M_x_but < 0:
-            theta_but = math.degrees( 2 * math.pi - math.acos((OM**2 + BO**2 - BM**2) / (2 * BO * OM)) )
-        else:
-            if M_y_but > 0:
-                theta_but = 180
-            else : 
-                theta_but = 0
-        
-        #On en deduit tau, l'angle que doit prendre le moteur 1 : shoulder
-        tau_but = theta_but + alpha_but
-        
-        #On cherche beta, normalement nous pouvons trouver facilement mais je generalise pour des bras de longueur differentes
-        beta_but = math.degrees( math.acos((self.arm_1_length**2+ self.arm_2_length**2 - OM**2 ) / (2 * self.arm_2_length * self.arm_1_length)) )
 
-        #On peut donc determiner beta_prime, l'angle que doit prendre le moteur 2 : elbow
-        if position_type == 0:
-            beta_prime_but = -(180 - beta_but)
+        #handling edge-cases
+        if M_x_but == 0 and M_y_but == 0 :
+            shoulder.spin(shoulder.determine_steps(self.tau), 1)
+            elbow.spin(elbow.determine_steps(self.beta_prime + 180), 1)
+            wrist.spin(wrist.determine_steps(self.sigma), 1)
+            wrist.spin(abs(wrist.determine_steps(optimize_angle(phi_but))), sign(wrist.determine_steps(optimize_angle(phi_but))))
+            
+            self.tau = 0
+            self.beta_prime = 180
+            self.sigma = phi_but 
+            self.M_x = M_x_but
+            self.M_y = M_y_but
+            self.position_type = position_type
+        
         else : 
-            beta_prime_but = 180 - beta_but
+            #On definit certaines droites et segments utiles pour des calculs futurs, B(0, -100)
+            OM = math.sqrt(M_x_but**2 + M_y_but**2)
+            BM = math.sqrt(M_x_but**2 + (M_y_but + 100)**2)
+            BO = 100
+            print(f"OM : {OM}")
+            print(f"BM : {BM}")
+            
+            #On cherche alpha, l'angle relatif que le moteur doit prendre par rapport a la droite OM
+            if position_type == 0:
+                alpha_but = math.degrees( math.acos((self.arm_1_length**2 +  OM**2 - self.arm_2_length**2) / (2 * self.arm_2_length * OM)) )
+            else:
+                alpha_but = math.degrees( - math.acos((self.arm_1_length**2 +  OM**2 - self.arm_2_length**2) / (2 * self.arm_2_length * OM)) )
+            
 
-        #On calcule les coordonnees de I
-        I_x_but = math.cos(math.radians(tau_but - 90)) * 50
-        I_y_but = math.sin(math.radians(tau_but - 90)) * 50
-     
-        #On determine epsilone decoulant de cette nouvelle configuration
-        delta_x_IM = M_x_but - I_x_but
-        delta_y_IM = M_y_but - I_y_but
-        if delta_x_IM > 0:
-            if delta_y_IM > 0:
-                #M above to the right
-                epsilon = 90 + math.degrees(math.tan(delta_y_IM / delta_x_IM))
-            else :
-                #M below to the right
-                epsilon = 90 - math.degrees(math.tan(delta_y_IM / delta_x_IM))
-        else : 
-            if delta_y_IM > 0:
-                #M above to the left
-                epsilon = 270 - math.degrees(math.tan(delta_y_IM / delta_x_IM))
+            print(f"alpha but : {alpha_but}")
+            #On cherche theta, l'angle entre la verticale et la semi-doite [OM) dans le sens trigonometrique
+            if M_x_but > 0:
+                theta_but = math.degrees( math.acos((OM**2 + BO**2 - BM**2) / (2 * BO * OM)) ) 
+            elif M_x_but < 0:
+                theta_but = math.degrees( 2 * math.pi - math.acos((OM**2 + BO**2 - BM**2) / (2 * BO * OM)) )
+            else:
+                if M_y_but > 0:
+                    theta_but = 180
+                else : 
+                    theta_but = 0
+            
+            print(f"theta but : {theta_but}")
+            
+            #On en deduit tau, l'angle que doit prendre le moteur 1 : shoulder
+            tau_but = theta_but + alpha_but
+            print(f"tau but : {tau_but}")
+            
+            #On cherche beta, normalement nous pouvons trouver facilement mais je generalise pour des bras de longueur differentes
+            beta_but = math.degrees( math.acos((self.arm_1_length**2+ self.arm_2_length**2 - OM**2 ) / (2 * self.arm_2_length * self.arm_1_length)) )
+            print(f"beta but : {beta_but}")
+            #On peut donc determiner beta_prime, l'angle que doit prendre le moteur 2 : elbow
+            if position_type == 0:
+                beta_prime_but = -(180 - beta_but)
             else : 
-                #Mbelow to the left
-                epsilon = 270 + math.degrees(math.tan(delta_y_IM / delta_x_IM))
-        
-        #calcul d'angles final
-        delta_tau = optimize_angle(tau_but - self.tau)
-        delta_beta_prime = optimize_angle(beta_prime_but - self.beta_prime)
-        delta_phi =  optimize_angle(phi_but - (epsilon + self.sigma))
-        
-        #Calculs vitesses de chaque moteur
-        delta_time = max([shoulder.determine_time(shoulder.determine_steps(delta_tau)), elbow.determine_time(elbow.determine_steps(delta_beta_prime)), wrist.determine_time(wrist.determine_steps(delta_phi))])
-
-        async def simultanious_spin(delta_tau, delta_beta_prime, delta_phi, delta_time):
-           task1 = asyncio.create_task(shoulder.spin(abs(shoulder.determine_steps(delta_tau)), sign(shoulder.determine_steps(delta_tau)), delta_time))
-           task2 = asyncio.create_task(elbow.spin(abs(elbow.determine_steps(delta_beta_prime)), sign(elbow.determine_steps(delta_beta_prime)), delta_time))
-           task3 = asyncio.create_task(wrist.spin(abs(wrist.determine_steps(delta_phi)), sign(wrist.determine_steps(delta_phi)), delta_time))
-           await task1
-           await task2
-           await task3
-
-        asyncio.run(simultanious_spin(delta_tau, delta_beta_prime, delta_phi, delta_time))
-        
-        self.tau = tau_but
-        self.beta_prime = beta_prime_but
-        self.sigma = phi_but - epsilon
-        self.M_x = M_x_but
-        self.M_y = M_y_but
-        self.position_type = position_type
+                beta_prime_but = 180 - beta_but
+            
+            print(f"beta prime but : {beta_prime_but}")
+            #On calcule les coordonnees de I
+            I_x_but = math.cos(math.radians(tau_but - 90)) * 50
+            I_y_but = math.sin(math.radians(tau_but - 90)) * 50
+            print(f"I x but : {I_x_but}")
+            print(f"I y but : {I_y_but}")
+            
+            #On determine epsilone decoulant de cette nouvelle configuration
+            delta_x_IM = M_x_but - I_x_but
+            delta_y_IM = M_y_but - I_y_but
+            print(f"delta x IM : {delta_x_IM}")
+            print(f"delta y IM : {delta_y_IM}")
+            
+            if delta_x_IM > 0:
+                if delta_y_IM > 0:
+                    #M above to the right
+                    epsilon = 90 + math.degrees(math.atan(delta_y_IM / delta_x_IM))
+                else :
+                    #M below to the right
+                    epsilon = 90 - math.degrees(math.atan(delta_y_IM / delta_x_IM))
+            else : 
+                if delta_y_IM > 0:
+                    #M above to the left
+                    epsilon = 270 - math.degrees(math.atan(delta_y_IM / delta_x_IM))
+                else : 
+                    #Mbelow to the left
+                    epsilon = 270 + math.degrees(math.atan(delta_y_IM / delta_x_IM))
+            print(f"epsilon : {epsilon}")
+            
+            #calcul d'angles final
+            delta_tau = optimize_angle(tau_but - self.tau)
+            delta_beta_prime = optimize_angle(beta_prime_but - self.beta_prime)
+            delta_phi =  optimize_angle(phi_but - (epsilon + self.sigma))
+            print(f"delta tau : {delta_tau}")
+            print(f"delta beta prime : {delta_beta_prime}")
+            print(f"delta phi : {delta_phi}")
+            
+            #Calculs vitesses de chaque moteur
+            shoulder.spin(abs(shoulder.determine_steps(delta_tau)), sign(shoulder.determine_steps(delta_tau)))
+            elbow.spin(abs(elbow.determine_steps(delta_beta_prime)), sign(elbow.determine_steps(delta_beta_prime)))
+            wrist.spin(abs(wrist.determine_steps(delta_phi)), sign(wrist.determine_steps(delta_phi))) 
+            
+            self.tau = tau_but
+            self.beta_prime = beta_prime_but
+            self.sigma = phi_but - epsilon
+            self.M_x = M_x_but
+            self.M_y = M_y_but
+            self.position_type = position_type
+            
+            print("\n\n")
         
     def negative_rail_move(self):
         while position_limit_switch.state() == 1: 
@@ -260,11 +279,11 @@ def optimize_angle(angle):
 
 def sign(x): #Attention il faut bien configurer les moteurs tels que quand dir == 1, ils tournent dans le sens anti-horraire / trigonometrique
     if x > 0:
-        return 1
-    elif x < 0:
         return 0
-    else:
+    elif x < 0:
         return 1
+    else:
+        return 0
 
 def turn_on_vacuum():
   vacuum_signal.value(HIGH)
