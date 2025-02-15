@@ -20,18 +20,16 @@ pin_colonne_4 =
 pin_ligne_1 = 
 pin_ligne_2 = 
 pin_ligne_3 = 
-pin_ligne_4 = 
 pin_info_sup =
 
 #creation de la classe
 class Armoire:
-  def __init__(self, signal_pin, pin_colonne_1, pin_colonne_2, pin_colonne_3, pin_colonne_4, pin_ligne_1, pin_ligne_2, pin_ligne_3, pin_ligne_4, pin_info_sup):
+  def __init__(self, signal_pin, pin_colonne_1, pin_colonne_2, pin_colonne_3, pin_colonne_4, pin_ligne_1, pin_ligne_2, pin_ligne_3, pin_info_sup):
       self.matrice = [[-1,-1,-1,-1],
-                      [-1,-1,-1,-1],
                       [-1,-1,-1,-1],
                       [-1,-1,-1,-1]]
       self.valeur_renvoye = [0,0]
-      self.temps_sechage = ("donner le temps")
+      self.temps_sechage = 
       self.etat_sukata = 0
       self.signal_pin = Pin(signal_pin, Pin.IN)
       self.pin_colonne_1 = pin_colonne_1
@@ -41,7 +39,6 @@ class Armoire:
       self.pin_ligne_1 = pin_ligne_1
       self.pin_ligne_2 = pin_ligne_2
       self.pin_ligne_3 = pin_ligne_3
-      self.pin_ligne_4 = pin_ligne_4
   
   def allumer_pin(self, pos, val):
     if pos[0] == 0:
@@ -58,11 +55,7 @@ class Armoire:
       self.pin_ligne_3.value(1)
     else:
       self.pin_ligne_3.value(0)
-
-    if pos[0] == 3:
-      self.pin_ligne_4.value(1)
-    else:
-      self.pin_ligne_4.value(0)
+      
 
     if pos[1] == 0:
       self.pin_colonne_1.value(1)
@@ -89,7 +82,7 @@ class Armoire:
   def next_position(self):
     while True:
       self.attendre_1_seconde()
-      for i in range(4):
+      for i in range(3):
         for j in range(4):
           if self.est_sec(i, j):
             self.etat_sukata = 0
@@ -104,7 +97,7 @@ class Armoire:
 
   def attendre_1_seconde(self):
     time.sleep(1)
-    for i in range(4):
+    for i in range(3):
       for j in range(4):
         if self.matrice[i][j] > 0:
           self.matrice[i][j] -= 1
@@ -127,14 +120,13 @@ class Armoire:
         self.matrice[self.valeur_renvoye[0]][self.valeur_renvoye[1]] = -1
 
   def __str__(self):
-    info = "matrice actuelle : {self.matrice} \netat sukata = {self.etat_sukata} \nvaleur renvoye : {self.valeur_renvoye} \n\n\n"
-    info_sup = "informations supplementaire :"
-    info_lignes = "\npins ligne etats actuels : \n  1 : {self.pin_ligne_1.value()} \n  2 : {self.pin_ligne_2.value()} \n  3 : {self.pin_ligne_3.value()} \n  4 : {self.pin_ligne_4.value()}"
-    info_colonnes = "\n\npins colonne etats actuels : \n  1 : {self.pin_colonne_1.value()} \n  2 : {self.pin_colonne_2.value()} \n  3 : {self.pin_colonne_3.value()} \n  4 : {self.pin_colonne_4.value()}"
+    info = f"matrice actuelle : {self.matrice} \netat sukata = {self.etat_sukata} \nvaleur renvoye : {self.valeur_renvoye} \n\n\n"
+    info_sup = f"informations supplementaire :"
+    info_lignes = f"\npins ligne etats actuels : \n  1 : {self.pin_ligne_1.value()} \n  2 : {self.pin_ligne_2.value()} \n  3 : {self.pin_ligne_3.value()}"
+    info_colonnes = f"\n\npins colonne etats actuels : \n  1 : {self.pin_colonne_1.value()} \n  2 : {self.pin_colonne_2.value()} \n  3 : {self.pin_colonne_3.value()} \n  4 : {self.pin_colonne_4.value()}"
     all_strings = info + info_sup + info_lignes + info_colonnes
-    return fall_strings
+    return all_strings
 
 #Appel et execution du code    
-armoire = Armoire(signal_pin, pin_colonne_1, pin_colonne_2, pin_colonne_3, pin_colonne_4, pin_ligne_1, pin_ligne_2, pin_ligne_3, pin_ligne_4, pin_info_sup)
+armoire = Armoire(signal_pin, pin_colonne_1, pin_colonne_2, pin_colonne_3, pin_colonne_4, pin_ligne_1, pin_ligne_2, pin_ligne_3, pin_info_sup)
 armoire.run()
-  
