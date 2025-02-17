@@ -10,6 +10,7 @@ Objetcif : Fournir a la carte mere l'information sur la position des sukatas et 
 #Importation des librairies
 from machine import Pin
 import time
+import _thread
 
 #Initialisation des pins
 signal_pin = 
@@ -21,6 +22,8 @@ pin_ligne_1 =
 pin_ligne_2 = 
 pin_ligne_3 = 
 pin_info_sup =
+
+moteurs_pins = [Pin(pin, Pin.OUT) for pin in ["numeros de pin"]]
 
 #creation de la classe
 class Armoire:
@@ -39,6 +42,9 @@ class Armoire:
       self.pin_ligne_1 = pin_ligne_1
       self.pin_ligne_2 = pin_ligne_2
       self.pin_ligne_3 = pin_ligne_3
+      self.pin_info_sup = pin_info_sup
+      self.moteurs = moteurs_pins
+      self.moteurs_actifs = {}
   
   def allumer_pin(self, pos, val):
     if pos[0] == 0:
@@ -79,6 +85,26 @@ class Armoire:
 
     self.pin_info_sup.value(val)
 
+    if val == 1:
+      self.allumer_moteur(pos)
+
+  def allumer_moteur(self, pos):
+      if pos in self.moteurs_actifs:
+        return
+      if not self.moteurs: #pas de moteurs dispo(mais je pense pas que c'est necessaire, il y aura des moteurs pour chaque case
+        return
+      moteur = self.moteurs.pop(0)
+      self.moteurs_actifs[pos] = moteur
+      moteur.value(1)
+      _thread.start_new_thread(self.arreter_moteur, (pos,))
+  
+  
+  def arreter_moteur(self, pos):
+    time.sleep(self.temps_sechage)
+    moteur = self.moteurs_actifs.pop(pos)
+    moteur.value(0)
+    self.moteurs.append(moteur)
+  
   def next_position(self):
     while True:
       self.attendre_1_seconde()
@@ -114,8 +140,10 @@ class Armoire:
       self.allumer_pin(self.valeur_renvoye, self.etat_sukata)
       while self.signal_pin.value() != 1:
         self.attendre_1_seconde()
+        
       if self.etat_sukata == 1:
         self.matrice[self.valeur_renvoye[0]][self.valeur_renvoye[1]] = self.temps_sechage
+        self.allumer_moteur(self.valeur_renvoye)
       else :
         self.matrice[self.valeur_renvoye[0]][self.valeur_renvoye[1]] = -1
 
